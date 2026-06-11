@@ -2,6 +2,7 @@ import os
 import re
 import io
 import qrcode
+from PIL import Image, ImageFilter
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, CallbackQueryHandler,
@@ -9,9 +10,9 @@ from telegram.ext import (
 )
 
 TOKEN = os.environ.get("TOKEN")
-UPI_ID = "paytm.s2ss981@pty"
+UPI_ID = "Q850464187@ybl"
 ADMIN_ID = 7455385301 # 👈 Apna Telegram ID daalo
-SUPPORT = ""
+SUPPORT = "@shreya_rao22"
 
 WAITING_UTR = 1
 WAITING_SCREENSHOT = 2
@@ -21,27 +22,40 @@ PLANS = {
         "emoji": "",
         "name": "❤️‍🔥",
         "price": 299,
-        "pictures": "3  Pictures",
-        "talk": "10",
+        "pictures": "3 Hot Pictures",
+        "talk": "10 Min Chat",
         "group": "https://t.me/+8Qr_3YGALQ81MTU1",  # 👈 Basic plan ka link
     },
     "pro": {
         "emoji": "",
         "name": "🥵",
         "price": 599,
-        "pictures": "5 Pictures",
-        "talk": "30 ",
+        "pictures": "5 Hot Pictures",
+        "talk": "30 Min Chat",
         "group": "https://t.me/+Aug56KiJA9EwZTdl",    # 👈 Pro plan ka link
     },
     "vip": {
         "emoji": "",
         "name": "💦",
         "price": 1499,
-        "pictures": "10 Pictures",
-        "talk": "60 ",
+        "pictures": "10 Hot Pictures",
+        "talk": "60 Min Chat",
         "group": "https://t.me/+VipDummyLink789",    # 👈 VIP plan ka link
     },
 }
+
+
+PREVIEW_IMAGE = "preview.jpg"
+
+def make_blurred_preview() -> io.BytesIO | None:
+    if not os.path.exists(PREVIEW_IMAGE):
+        return None
+    img = Image.open(PREVIEW_IMAGE).convert("RGB")
+    blurred = img.filter(ImageFilter.GaussianBlur(radius=18))
+    buf = io.BytesIO()
+    blurred.save(buf, format="JPEG")
+    buf.seek(0)
+    return buf
 
 
 def make_qr(upi_id: str, amount: int) -> io.BytesIO:
@@ -67,10 +81,21 @@ def plan_keyboard():
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
-    await update.message.reply_text(
-        "Choose your plan:",
-        reply_markup=plan_keyboard()
-    )
+    preview = make_blurred_preview()
+    if preview:
+        await update.message.reply_photo(
+            photo=preview,
+            caption=(
+                "🔥 Exclusive Content Unlock Karo!\n\n"
+                "Neeche plan choose karo aur access pao 👇"
+            ),
+            reply_markup=plan_keyboard()
+        )
+    else:
+        await update.message.reply_text(
+            "Choose your plan:",
+            reply_markup=plan_keyboard()
+        )
 
 
 async def plan_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
